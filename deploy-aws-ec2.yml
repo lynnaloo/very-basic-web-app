@@ -1,0 +1,52 @@
+# Node.js Express Web App 
+# Build a Node.js Express app and deploy it as a web app.
+
+# trigger:
+# - master
+
+variables:
+
+  # Azure Resource Manager connection created during pipeline creation
+  azureSubscription: $(azureSubscription)
+  
+  # Web app name
+  webAppName: 'linda-test-web'
+  
+  # Environment name
+  environmentName: 'linda-test-web'
+
+  # Agent VM image name
+  vmImageName: 'ubuntu-latest'
+
+stages:
+- stage: Build
+  displayName: Build stage
+  jobs:  
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: $(vmImageName)
+      
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '10.x'
+      displayName: 'Install Node.js'
+
+    - script: |
+        python -m pip install --upgrade pip
+        pip install awscli
+      displayName: 'Install AWS cli'
+
+    - script: |
+        npm install
+      displayName: 'npm install, build and test'
+      
+    - task: ArchiveFiles@2
+      displayName: 'Archive files'
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
+        includeRootFolder: false
+        archiveType: zip
+        archiveFile: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
+        replaceExistingArchive: true
